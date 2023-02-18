@@ -1,11 +1,24 @@
-# bluecity_example
+# Bluecity Realtime API Example
 
-## Pre-requisites
+## Install Bluecity library
+```
+python3 -m pip install lib/bctRealtimeSubscriber-2.3.0-py3-none-any.whl
+```
 
-Install the [lib](lib/bctRealtimeSubscriber-2.3.0-py3-none-any.whl) following the included [documentation](doc/RealtimeAPI%20Documentation.pdf)
-
-## Running the example
+## Run example
 You'll need a BlueCity username and pass to access the realtime API.
 ```
-./example.py USERNAME PASS
+./example.py <username> <password>
 ```
+
+## Run ROS example and visualization
+1. Run the ROS wrapper:
+    ```
+    ./ros_amrl_visualization.py <username> <password>
+    ```
+2. Run websocket and webviz from [webviz](https://github.com/ut-amrl/webviz)
+
+## User access dashboard
+https://insight.bluecity.ai/overview
+
+
