@@ -19,6 +19,42 @@ def ResetVisualizationMsg(msg):
   msg.header.stamp = rospy.Time.now()
   msg.lines = []
 
+# Return a list of ColorLine2D that represents a box centered at (centerX,
+# centerY), with length and width, and rotation angle, and color color
+def DrawBox(centerX, centerY, length, width, angle, color):
+  # Create a box centered at the point centerX, centerY, rotation angle,
+  # with width width and length length
+  # The box is defined by 4 points p1, p2, p3, p4 in counter-clockwise order.
+  p1 = Point2D()
+  p1.x = centerX + length/2 * math.cos(angle) - width/2 * math.sin(angle)
+  p1.y = centerY + length/2 * math.sin(angle) + width/2 * math.cos(angle)
+  p2 = Point2D()
+  p2.x = centerX + length/2 * math.cos(angle) + width/2 * math.sin(angle)
+  p2.y = centerY + length/2 * math.sin(angle) - width/2 * math.cos(angle)
+  p3 = Point2D()
+  p3.x = centerX - length/2 * math.cos(angle) + width/2 * math.sin(angle)
+  p3.y = centerY - length/2 * math.sin(angle) - width/2 * math.cos(angle)
+  p4 = Point2D()
+  p4.x = centerX - length/2 * math.cos(angle) - width/2 * math.sin(angle)
+  p4.y = centerY - length/2 * math.sin(angle) + width/2 * math.cos(angle)
+  line1 = ColoredLine2D()
+  line1.p0 = p1
+  line1.p1 = p2
+  line1.color = color
+  line2 = ColoredLine2D()
+  line2.p0 = p2
+  line2.p1 = p3
+  line2.color = color
+  line3 = ColoredLine2D()
+  line3.p0 = p3
+  line3.p1 = p4
+  line3.color = color
+  line4 = ColoredLine2D()
+  line4.p0 = p4
+  line4.p1 = p1
+  line4.color = color
+  return [line1, line2, line3, line4]
+
 if __name__ == '__main__':
   rospy.init_node('bluecity_example', anonymous=False)
   # Check to see if a file named ".credentials" exists in the current directory,
@@ -55,9 +91,9 @@ if __name__ == '__main__':
   msg.ns = "bluecity_example"
 
   sensorLoc = Point2D()
-  sensorLoc.x = 86.091
+  sensorLoc.x = 86
   sensorLoc.y = -120
-  sensorAngle = 0
+  sensorAngle = math.radians(5)
   # Create a visualization publisher
   pub = rospy.Publisher('visualization', VisualizationMsg, queue_size=10)
   while rospy.is_shutdown() == False:
@@ -66,9 +102,20 @@ if __name__ == '__main__':
     # print("Frame: ")
     # print(len(data.objects))
     ResetVisualizationMsg(msg)
+    # Draw a box and a cross at the sensor location.
+    msg.lines.extend(DrawBox(sensorLoc.x, sensorLoc.y, 0.5, 0.5, 0, 0x000000))
+    msg.lines.append(ColoredLine2D(
+        Point2D(sensorLoc.x - 0.5, sensorLoc.y),
+        Point2D(sensorLoc.x + 0.5, sensorLoc.y),
+        0x000000))
+    msg.lines.append(ColoredLine2D(
+        Point2D(sensorLoc.x, sensorLoc.y - 0.5),
+        Point2D(sensorLoc.x, sensorLoc.y + 0.5),
+        0x000000))
+
     for obj in data.objects:
       # print(obj)
-      obj.rotation = obj.rotation + sensorAngle
+      obj.rotation = -obj.rotation + sensorAngle
       obj.centerX = obj.centerX + sensorLoc.x
       obj.centerY = obj.centerY + sensorLoc.y
       if obj.classType == "10":
@@ -93,39 +140,6 @@ if __name__ == '__main__':
           # unknown, black
           print("Unknown class type: " + str(obj.classType))
           color = 0x000000
-      # Create a box centered at the point obj.centerX, obj.centerY, rotation
-      # obj.rotation, with width obj.width and length obj.length
-      # The box is defined by 4 points p1, p2, p3, p4 in counter-clockwise order.
-      p1 = Point2D()
-      p1.x = obj.centerX + obj.length/2 * math.cos(obj.rotation) - obj.width/2 * math.sin(obj.rotation)
-      p1.y = obj.centerY + obj.length/2 * math.sin(obj.rotation) + obj.width/2 * math.cos(obj.rotation)
-      p2 = Point2D()
-      p2.x = obj.centerX + obj.length/2 * math.cos(obj.rotation) + obj.width/2 * math.sin(obj.rotation)
-      p2.y = obj.centerY + obj.length/2 * math.sin(obj.rotation) - obj.width/2 * math.cos(obj.rotation)
-      p3 = Point2D()
-      p3.x = obj.centerX - obj.length/2 * math.cos(obj.rotation) + obj.width/2 * math.sin(obj.rotation)
-      p3.y = obj.centerY - obj.length/2 * math.sin(obj.rotation) - obj.width/2 * math.cos(obj.rotation)
-      p4 = Point2D()
-      p4.x = obj.centerX - obj.length/2 * math.cos(obj.rotation) - obj.width/2 * math.sin(obj.rotation)
-      p4.y = obj.centerY - obj.length/2 * math.sin(obj.rotation) + obj.width/2 * math.cos(obj.rotation)
-      line1 = ColoredLine2D()
-      line1.p0 = p1
-      line1.p1 = p2
-      line1.color = color
-      msg.lines.append(line1)
-      line2 = ColoredLine2D()
-      line2.p0 = p2
-      line2.p1 = p3
-      line2.color = color
-      msg.lines.append(line2)
-      line3 = ColoredLine2D()
-      line3.p0 = p3
-      line3.p1 = p4
-      line3.color = color
-      msg.lines.append(line3)
-      line4 = ColoredLine2D()
-      line4.p0 = p4
-      line4.p1 = p1
-      line4.color = color
-      msg.lines.append(line4)
+      msg.lines.extend(DrawBox(
+          obj.centerX, obj.centerY, obj.length, obj.width, obj.rotation, color))
     pub.publish(msg)
