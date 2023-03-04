@@ -114,10 +114,11 @@ if __name__ == '__main__':
         0x000000))
 
     for obj in data.objects:
-      # print(obj)
-      obj.rotation = -obj.rotation + sensorAngle
+      print(obj)
+      obj.rotation = obj.rotation + sensorAngle
       obj.centerX = obj.centerX + sensorLoc.x
-      obj.centerY = obj.centerY + sensorLoc.y
+      obj.centerY = -obj.centerY + sensorLoc.y
+
       if obj.classType == "10":
           # pedestrian, blue
           color = 0x0000FF
@@ -140,6 +141,6 @@ if __name__ == '__main__':
           # unknown, black
           print("Unknown class type: " + str(obj.classType))
           color = 0x000000
-      msg.lines.extend(DrawBox(
-          obj.centerX, obj.centerY, obj.length, obj.width, obj.rotation, color))
+    #   msg.lines.extend(DrawBox(px, py, obj.length, obj.width, obj.rotation, color))
+      msg.lines.extend(DrawBox(obj.centerX, obj.centerY, obj.length, obj.width, obj.rotation, color))
     pub.publish(msg)
