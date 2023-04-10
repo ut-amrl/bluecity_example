@@ -55,4 +55,4 @@ if __name__ == '__main__':
   occupancy_thread.start()
   frame_thread.join()
   phase_thread.join()
-  occupancy_thread .join()
+  occupancy_thread.join()
