@@ -4,7 +4,6 @@ import threading
 import sys
 import math
 import rospy, roslib
-import pickle
 
 roslib.load_manifest('amrl_msgs')
 import rospkg
@@ -12,7 +11,6 @@ import rospkg
 from amrl_msgs.msg import VisualizationMsg
 from amrl_msgs.msg import ColoredLine2D
 from amrl_msgs.msg import Point2D
-import itertools
 
 stream = None
 
@@ -98,8 +96,6 @@ if __name__ == '__main__':
   sensorAngle = math.radians(5)
   # Create a visualization publisher
   pub = rospy.Publisher('visualization', VisualizationMsg, queue_size=10)
-
-
   while rospy.is_shutdown() == False:
     # print("Getting frame...")
     data = stream.get_frame()
@@ -118,76 +114,33 @@ if __name__ == '__main__':
         0x000000))
 
     for obj in data.objects:
+      print(obj)
+      obj.rotation = obj.rotation + sensorAngle
+      obj.centerX = obj.centerX + sensorLoc.x
+      obj.centerY = -obj.centerY + sensorLoc.y
 
-        try:
-            with open('trajectories.pickle', 'rb') as handle:
-                objects_dict = pickle.load(handle)
-        except FileNotFoundError:
-            # If the file doesn't exist, create an empty dictionary
-            objects_dict = {}
-        # Get the object ID
-        obj_id = obj.id
-        
-        # Check if the ID already exists in the dictionary
-        if obj_id in objects_dict:
-            # If it does, append the object data to the existing list
-            objects_dict[obj_id].append({
-                'centerX': obj.centerX,
-                'centerY': obj.centerY,
-                'width': obj.width,
-                'length': obj.length,
-                'rotation': obj.rotation,
-                'classType': obj.classType,
-                'speed': obj.speed,
-                'height': obj.height,
-                'accuracy': obj.accuracy
-            })
-        else:
-            # If it doesn't, create a new list with the object data and add it to the dictionary
-            objects_dict[obj_id] = [{
-                'centerX': obj.centerX,
-                'centerY': obj.centerY,
-                'width': obj.width,
-                'length': obj.length,
-                'rotation': obj.rotation,
-                'classType': obj.classType,
-                'speed': obj.speed,
-                'height': obj.height,
-                'accuracy': obj.accuracy
-            }]
-
-        # Save the updated dictionary back to the pickle file
-        with open('trajectories.pickle', 'wb') as handle:
-            pickle.dump(objects_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            # Print the result
-            # print(result)
-        print(obj)
-        obj.rotation = obj.rotation + sensorAngle
-        obj.centerX = obj.centerX + sensorLoc.x
-        obj.centerY = -obj.centerY + sensorLoc.y
-
-        if obj.classType == "10":
-            # pedestrian, blue
-            color = 0x0000FF
-        elif obj.classType == "2":
-            # car, red
-            color = 0xFF0000
-        elif obj.classType == "3":
-            # van, purple
-            color = 0x800080
-        elif obj.classType == "4":
-            # truck, orange
-            color = 0xFFA500
-        elif obj.classType == "5":
-            # bus, yellow
-            color = 0xFFFF00
-        elif obj.classType == "13":
-            # bicycle, green
-            color = 0x00A000
-        else:
-            # unknown, black
-            print("Unknown class type: " + str(obj.classType))
-            color = 0x000000
-        #   msg.lines.extend(DrawBox(px, py, obj.length, obj.width, obj.rotation, color))
-        msg.lines.extend(DrawBox(obj.centerX, obj.centerY, obj.length, obj.width, obj.rotation, color))
+      if obj.classType == "10":
+          # pedestrian, blue
+          color = 0x0000FF
+      elif obj.classType == "2":
+          # car, red
+          color = 0xFF0000
+      elif obj.classType == "3":
+          # van, purple
+          color = 0x800080
+      elif obj.classType == "4":
+          # truck, orange
+          color = 0xFFA500
+      elif obj.classType == "5":
+          # bus, yellow
+          color = 0xFFFF00
+      elif obj.classType == "13":
+          # bicycle, green
+          color = 0x00A000
+      else:
+          # unknown, black
+          print("Unknown class type: " + str(obj.classType))
+          color = 0x000000
+    #   msg.lines.extend(DrawBox(px, py, obj.length, obj.width, obj.rotation, color))
+      msg.lines.extend(DrawBox(obj.centerX, obj.centerY, obj.length, obj.width, obj.rotation, color))
     pub.publish(msg)
