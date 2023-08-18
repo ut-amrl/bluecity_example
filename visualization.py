@@ -51,7 +51,7 @@ def visualize_trajectories(pickle_file):
             fig  = legend.figure
             fig.canvas.draw()
             bbox  = legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-            fig.savefig(filename, dpi="figure", bbox_inches=bbox)
+            # fig.savefig(filename, dpi="figure", bbox_inches=bbox)
         export_legend(legend)
         # hide the legend
         legend.remove()
@@ -62,13 +62,14 @@ def visualize_trajectories(pickle_file):
 
 if __name__ == '__main__':
         # get input arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("pickle_file", help="pickle file to visualize")
-    args = parser.parse_args()
-    if args.pickle_file == None:
-        print("Usage: python visualization.py <pickle_file>")
-        sys.exit(1)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("pickle_file", help="pickle file to visualize")
+    # args = parser.parse_args()
+    # if args.pickle_file == None:
+    #     print("Usage: python visualization.py <pickle_file>")
+    #     sys.exit(1)
     # visualize the trajectories
-    visualize_trajectories(args.pickle_file)
+    # visualize_trajectories(args.pickle_file)
+    visualize_trajectories("data/trajectories_clean_full_set")
     
 

@@ -33,7 +33,7 @@ def prepare_interaction_matrix(pickle_file):
     up = ['320730597', '233', '690', '507', '604'] #x_init = -9,-2
     down = ['20030848', '770', '54','979','745'] #x_init = -9, 11
 
-    triplets = generate_triplets(right, left, down)
+    triplets = generate_triplets(up, down, left)
 
     demo_trajectories = []
     u_trajectories = []
@@ -82,7 +82,7 @@ def prepare_interaction_matrix(pickle_file):
     # name of the input pickle file
     pickle_file_name = pickle_file.split("/")[-1].split(".")[0]
     # save the matrix
-    with open('/home/rchandra/Research/MA_IRL/data/demo_trajectories_rld.pickle', 'wb') as file:
+    with open('/home/rchandra/Research/MultiAgentIRL/data/demo_trajectories_udl.pickle', 'wb') as file:
         pickle.dump({'x': demo_trajectories, 'u': u_trajectories}, file)    
 
     with open('data/demo_trajectories_udl.pickle', 'wb') as fileh:
