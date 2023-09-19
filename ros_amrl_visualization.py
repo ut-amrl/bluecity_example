@@ -3,7 +3,9 @@ from realtime_subscriber.Realtime_subscriber_api import BCTWSConnection
 import threading
 import sys
 import math
-import rospy, roslib
+import rospy, roslib, rosbag  # MODIFIED: added rosbag
+from datetime import datetime  # Import datetime to generate timestamps
+
 
 roslib.load_manifest('amrl_msgs')
 import rospkg
@@ -13,6 +15,8 @@ from amrl_msgs.msg import ColoredLine2D
 from amrl_msgs.msg import Point2D
 
 stream = None
+bag = None  # MODIFIED: Initialize bag variable
+density_threshold = 10  # MODIFIED: Threshold for crowd density
 
 def ResetVisualizationMsg(msg):
   msg.header.seq += 1
@@ -113,6 +117,8 @@ if __name__ == '__main__':
         Point2D(sensorLoc.x, sensorLoc.y + 0.5),
         0x000000))
 
+    pedestrian_count = 0  # MODIFIED: Initialize pedestrian count
+
     for obj in data.objects:
       print(obj)
       obj.rotation = obj.rotation + sensorAngle
@@ -122,6 +128,7 @@ if __name__ == '__main__':
       if obj.classType == "10":
           # pedestrian, blue
           color = 0x0000FF
+          pedestrian_count += 1  # MODIFIED: Increment pedestrian count
       elif obj.classType == "2":
           # car, red
           color = 0xFF0000
@@ -144,3 +151,13 @@ if __name__ == '__main__':
     #   msg.lines.extend(DrawBox(px, py, obj.length, obj.width, obj.rotation, color))
       msg.lines.extend(DrawBox(obj.centerX, obj.centerY, obj.length, obj.width, obj.rotation, color))
     pub.publish(msg)
+    # MODIFIED: Check pedestrian density and record rosbag if above threshold
+    if pedestrian_count >= density_threshold:
+        if bag is None:
+            timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            bag = rosbag.Bag(f'crowd_density_{timestamp_str}.bag', 'w')
+        bag.write('visualization', msg, rospy.Time.now())
+    else:
+        if bag is not None:
+            bag.close()
+            bag = None
