@@ -1,4 +1,12 @@
-# Bluecity Realtime API Example
+# Setup the docker
+Follow the instructions here: https://github.com/ut-amrl/ros-noetic-docker
+
+# Setup webviz
+1. Launch the docker
+2. Follow the instructions here: https://github.com/ut-amrl/webviz
+
+
+# Bluecity Setup
 
 ## Install Bluecity library
 ```
