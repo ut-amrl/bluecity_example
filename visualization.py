@@ -25,16 +25,23 @@ def add_noise(value, noise_range):
     return value + random.uniform(-noise_range, noise_range)
 
 # def visualize_trajectories():
-def visualize_trajectories(pickle_file):
+def visualize_trajectories(pickle_file, min_length=200):
     # load the pickle file
     with open(pickle_file, 'rb') as f:
         trajectories = pickle.load(f)
+        # print(list(trajectories.keys()))
         # trajectories is a dictionary mapping object id to a dictionary
         # of the form{'class': class_type, 'frames': {frame_number: {'x': x_coordinate, 'y': y_coordinate, 'speed': speed}}}
         # create a plot
         fig = plt.figure()
         # update the data for each line
         for obj_id in trajectories:
+            frames = trajectories[obj_id]['frames']
+            print(frames)
+        # Filter out trajectories with fewer frames than min_length
+            if len(frames) < min_length:
+                continue
+
             x = [frame['x'] for frame in trajectories[obj_id]['frames'].values()]
             y = [frame['y'] for frame in trajectories[obj_id]['frames'].values()]
             objectType = int(trajectories[obj_id]['class'])
@@ -62,14 +69,14 @@ def visualize_trajectories(pickle_file):
 
 if __name__ == '__main__':
         # get input arguments
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("pickle_file", help="pickle file to visualize")
-    # args = parser.parse_args()
-    # if args.pickle_file == None:
-    #     print("Usage: python visualization.py <pickle_file>")
-    #     sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("pickle_file", help="pickle file to visualize")
+    args = parser.parse_args()
+    if args.pickle_file == None:
+        print("Usage: python visualization.py <pickle_file>")
+        sys.exit(1)
     # visualize the trajectories
-    # visualize_trajectories(args.pickle_file)
-    visualize_trajectories("data/trajectories_clean_full_set")
+    visualize_trajectories(args.pickle_file, min_length=200)
+    # visualize_trajectories("data/trajectories_clean_full_set")
     
 
