@@ -5,7 +5,8 @@ import sys
 import math
 import rospy, roslib, rosbag  # MODIFIED: added rosbag
 from datetime import datetime  # Import datetime to generate timestamps
-
+import pickle
+import time
 
 roslib.load_manifest('amrl_msgs')
 import rospkg
@@ -17,6 +18,17 @@ from amrl_msgs.msg import Point2D
 stream = None
 bag = None  # MODIFIED: Initialize bag variable
 density_threshold = 10  # MODIFIED: Threshold for crowd density
+
+def save_data():
+  # Save the trajectories as a pickle file appending the current date and time
+  # Make sure trajectories is not empty
+  if len(trajectories) == 0:
+    print("No trajectory data to save")
+    return
+  with open('data/traj/' + f"trajectory_{time.strftime('%Y%m%d-%H%M%S')}.pkl", "wb") as f:
+    pickle.dump(trajectories, f)
+  f.close()
+  print("Trajectory data saved")
 
 def ResetVisualizationMsg(msg):
   msg.header.seq += 1
@@ -61,6 +73,9 @@ def DrawBox(centerX, centerY, length, width, angle, color):
 
 if __name__ == '__main__':
   rospy.init_node('bluecity_example', anonymous=False)
+  rospy.on_shutdown(save_data)
+  # rospy.on_shutdown(bag.close())
+
   # Check to see if a file named ".credentials" exists in the current directory,
   # and if so, use it to log in
   try:
@@ -100,6 +115,8 @@ if __name__ == '__main__':
   sensorAngle = math.radians(5)
   # Create a visualization publisher
   pub = rospy.Publisher('visualization', VisualizationMsg, queue_size=10)
+  frame_counter = 0
+  trajectories = {}
   while rospy.is_shutdown() == False:
     # print("Getting frame...")
     data = stream.get_frame()
@@ -120,7 +137,6 @@ if __name__ == '__main__':
     pedestrian_count = 0  # MODIFIED: Initialize pedestrian count
 
     for obj in data.objects:
-      print(obj)
       obj.rotation = obj.rotation + sensorAngle
       obj.centerX = obj.centerX + sensorLoc.x
       obj.centerY = -obj.centerY + sensorLoc.y
@@ -132,32 +148,50 @@ if __name__ == '__main__':
       elif obj.classType == "2":
           # car, red
           color = 0xFF0000
+          pedestrian_count += 1
       elif obj.classType == "3":
           # van, purple
           color = 0x800080
+          pedestrian_count += 1
       elif obj.classType == "4":
           # truck, orange
           color = 0xFFA500
+          pedestrian_count += 1
       elif obj.classType == "5":
           # bus, yellow
           color = 0xFFFF00
+          pedestrian_count += 1
       elif obj.classType == "13":
           # bicycle, green
           color = 0x00A000
+          pedestrian_count += 1
       else:
           # unknown, black
           print("Unknown class type: " + str(obj.classType))
           color = 0x000000
     #   msg.lines.extend(DrawBox(px, py, obj.length, obj.width, obj.rotation, color))
       msg.lines.extend(DrawBox(obj.centerX, obj.centerY, obj.length, obj.width, obj.rotation, color))
+      if obj.id not in trajectories:
+        trajectories[obj.id] = {'class': obj.classType, 'frames': {}}
+          # speed is an optional field
+      if obj.speed is not None:
+        trajectories[obj.id]['frames'][frame_counter] = {'x': obj.centerX, 'y': obj.centerY, 'speed': obj.speed, 'rotation': obj.rotation, 'width': obj.width, 'length': obj.length}
+      else:
+        trajectories[obj.id]['frames'][frame_counter] = {'x': obj.centerX, 'y': obj.centerY, 'speed': 0, 'rotation': obj.rotation, 'width': obj.width, 'length': obj.length}
+    frame_counter += 1
     pub.publish(msg)
+    print(pedestrian_count)
     # MODIFIED: Check pedestrian density and record rosbag if above threshold
+
     if pedestrian_count >= density_threshold:
-        if bag is None:
-            timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            bag = rosbag.Bag(f'crowd_density_{timestamp_str}.bag', 'w')
-        bag.write('visualization', msg, rospy.Time.now())
+      if bag is None:
+          timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+          bag = rosbag.Bag('data/bags/'+f'crowd_density_{timestamp_str}.bag', 'w')
+      bag.write('visualization', msg, rospy.Time.now())
     else:
-        if bag is not None:
-            bag.close()
-            bag = None
+      if bag is not None:
+          bag.close()
+          bag = None      # frame_counter += 1
+      if trajectories != {}:
+         save_data()
+         trajectories = {}

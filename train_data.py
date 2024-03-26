@@ -26,7 +26,7 @@ def save_data():
   if len(trajectories) == 0:
     print("No trajectory data to save")
     return
-  with open(f"trajectory_{time.strftime('%Y%m%d-%H%M%S')}.pkl", "wb") as f:
+  with open('data/traj/' + f"trajectory_{time.strftime('%Y%m%d-%H%M%S')}.pkl", "wb") as f:
     pickle.dump(trajectories, f)
   print("Trajectory data saved")
 
@@ -70,13 +70,21 @@ if __name__ == '__main__':
       data = stream.get_frame()
 
       # append to trajectory dictionary
+      obj_count = 0
       for obj in data.objects:
+        obj_count +=1
         if obj.id not in trajectories:
           trajectories[obj.id] = {'class': obj.classType, 'frames': {}}
           # speed is an optional field
         if obj.speed is not None:
-          trajectories[obj.id]['frames'][frame_counter] = {'x': obj.centerX, 'y': obj.centerY, 'speed': obj.speed}
+          trajectories[obj.id]['frames'][frame_counter] = {'x': obj.centerX, 'y': obj.centerY, 'speed': obj.speed, 'rotation': obj.rotation, 'width': obj.width, 'length': obj.length}
         else:
-          trajectories[obj.id]['frames'][frame_counter] = {'x': obj.centerX, 'y': obj.centerY, 'speed': 0}
+          trajectories[obj.id]['frames'][frame_counter] = {'x': obj.centerX, 'y': obj.centerY, 'speed': 0, 'rotation': obj.rotation, 'width': obj.width, 'length': obj.length}
       # increment frame counter
       frame_counter += 1
+      print(obj_count)
+      # if obj_count <= 10:
+      #    if trajectories != {}:
+      #       save_data()
+      #       print(trajectories)
+      #       trajectories = {}
